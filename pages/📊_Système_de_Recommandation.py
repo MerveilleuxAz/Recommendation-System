@@ -9,10 +9,19 @@ import seaborn as sns
 
 # Configuration de la page Streamlit
 st.set_page_config(
-    page_title="Système de Recommandation", 
+    page_title="📊Système de Recommandation", 
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# 
+with st.sidebar : 
+        st.markdown("""
+        ## Auteurs
+        Gandaho Merveilleux AZIHOU
+        * LinkedIn : [Merveilleux AZIHOU](www.linkedin.com/in/gandaho-merveilleux-azihou-757849221)
+        * Email : [merveilleuxazihou@gmail.com](merveilleuxazihou@gmail.com)
+                    """)
 
 # Style CSS
 st.markdown("""
@@ -124,32 +133,62 @@ def predict_rating(user_id, item_id, user_item_matrix, item_similarity_df):
 # Section pour les données manuelles
 if selected == "Manuelle":
     with st.container():
-        st.markdown("<div class='card'><div class='card-header'>Entrez les notations manuellement</div>", unsafe_allow_html=True)
+        st.markdown("<div class='card'><div class='card-header'>📝 Entrez les notations manuellement</div>", unsafe_allow_html=True)
         
+        # Configuration de base
         col1, col2 = st.columns(2)
         with col1:
-            num_users = st.number_input("Nombre d'utilisateurs :", min_value=1, value=3)
+            num_users = st.number_input("Nombre d'utilisateurs :", min_value=1, max_value=20, value=3, 
+                                      help="Définissez le nombre d'utilisateurs qui ont noté les films")
         with col2:
-            num_items = st.number_input("Nombre de films :", min_value=1, value=5)
+            num_items = st.number_input("Nombre de films :", min_value=1, max_value=20, value=5,
+                                      help="Définissez le nombre de films à noter")
         
-        st.markdown("<div class='card' style='margin-top: 20px;'><div class='card-header'>Veuillez entrer les notations (1-5)</div>", unsafe_allow_html=True)
+        # Instructions claires
+        with st.expander("ℹ️ Comment remplir le tableau", expanded=False):
+            st.markdown("""
+                <div class='info-card' style='padding: 15px; margin-bottom: 20px;'>
+                    <ul>
+                        <li>Chaque colonne représente un film différent</li>
+                        <li>Chaque ligne correspond à un utilisateur différent</li>
+                        <li>Entrez des notes entre 1 (pas aimé) et 5 (excellent)</li>
+                        <li>Laissez vide si l'utilisateur n'a pas vu le film</li>
+                    </ul>
+                </div>
+                """, unsafe_allow_html=True)
         
+        # Tableau de saisie        
         data = pd.DataFrame(index=range(1, num_users + 1), columns=range(1, num_items + 1))
+        
+        # En-tête du tableau avec les films
         cols = st.columns(num_items)
         for item in range(1, num_items + 1):
             with cols[item-1]:
-                st.markdown(f"**Film {item}**")
-                for user in range(1, num_users + 1):
+                st.markdown(f"""
+                    <div style='text-align: center; padding: 5px; background-color: #f8f9fa; border-radius: 5px; margin-bottom: 5px;'>
+                        <strong>Film #{item}</strong>
+                    </div>
+                """, unsafe_allow_html=True)
+        
+        # Saisie des notes avec meilleur visibilité
+        for user in range(1, num_users + 1):
+            st.markdown(f"<div style='margin: 10px 0 5px 0; font-weight: 500;'>Utilisateur {user}</div>", unsafe_allow_html=True)
+            
+            user_cols = st.columns(num_items)
+            for item in range(1, num_items + 1):
+                with user_cols[item-1]:
                     data.at[user, item] = st.number_input(
-                        f"Utilisateur {user}:", 
-                        min_value=1, 
-                        max_value=5, 
-                        value=None, 
+                        label=f"Note pour Film {item}",
+                        min_value=1,
+                        max_value=5,
+                        value=None,
+                        step=1,
                         key=f"user{user}_item{item}",
-                        placeholder="1-5"
+                        placeholder="1-5",
+                        label_visibility="collapsed"
                     )
         
-        st.markdown("</div>", unsafe_allow_html=True)
+        # Conversion des données pour le traitement
         data_long = data.stack().reset_index()
         data_long.columns = ['user_id', 'item_id', 'rating']
 
